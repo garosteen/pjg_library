@@ -10,6 +10,10 @@ class HeightMap:
     - Convenient auto-generation of random perlin noise
     - Set cutoff points
     - Get slope angles and such
+    TODO:
+    - A shading function
+        - Give it an angle 0-2PI for which slopes need to be shaded
+        - The best thing to do might be to make a new HeightMap, populate it with 0/1 depending on if the slope at that point is within tolerance for being shaded, then create an IsoLayer to define the areas that are shaded. Probably would need the map to be bigger by 1 in every direction so that the isolines connect as needed on the edges.
     """
     def __init__(self,rows,cols=0):
         """
@@ -43,7 +47,12 @@ class HeightMap:
     def get_values(self):
         return self.values
 
+    def get_isolayer(self, value):
+        # TODO: The core topography functionality should be here, so I can query it at specific values
+        pass
+
     def get_topography(self,low=0.0,high=1.0,layers=5):
+        # TODO: this should just iterate over the values and call get_isolayer for each one and compile them together.
         isovals = np.linspace(low,high,layers)
         print(isovals)
         isos = [IsoLayer(i) for i in isovals]
