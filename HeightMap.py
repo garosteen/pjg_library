@@ -36,7 +36,18 @@ class HeightMap:
         y_coords = np.linspace(0., y_range, self.rows) # Indexing y vals from 0-10, for y_num points
         x_start = random.random()*10000
         y_start = random.random()*10000
-        self.values = np.array([[snoise3(x+x_start,y+y_start,warpstrength*snoise2(x*warpsize+x_start,y*warpsize+y_start,octaves=warpoctaves),octaves=octaves) for x in x_coords] for y in y_coords])
+        self.values = np.array([[(snoise3(x+x_start,y+y_start,warpstrength*snoise2(x*warpsize+x_start,y*warpsize+y_start,octaves=warpoctaves),octaves=octaves)+1.0) / 2.0 for x in x_coords] for y in y_coords])
+        neg = False
+        min_val = 0.5
+        max_val = 0.5
+        for row in range(self.rows):
+            for col in range(self.cols):
+                val = self.values[row][col]
+                if val < min_val:
+                    min_val = val
+                if val > max_val:
+                    max_val = val
+        print(f"Min: {min_val} \nMax: {max_val}")
 
     def set(self,row,col,val):
         self.values[row][col] = val
@@ -49,13 +60,7 @@ class HeightMap:
 
     def get_isolayer(self, value):
         # TODO: The core topography functionality should be here, so I can query it at specific values
-        pass
-
-    def get_topography(self,low=0.0,high=1.0,layers=5):
-        # TODO: this should just iterate over the values and call get_isolayer for each one and compile them together.
-        isovals = np.linspace(low,high,layers)
-        print(isovals)
-        isos = [IsoLayer(i) for i in isovals]
+        iso = IsoLayer(value)
         for row in range(self.rows - 1):
             for col in range(self.cols - 1):
                 topleft = self.values[row]   [col]
@@ -69,54 +74,59 @@ class HeightMap:
                 right_interp = 0.5
                 left_interp = 0.5
 
-                for index, val in enumerate(isovals):
-                    iso = isos[index]
-                    flags = 0
-                    if topleft > val:
-                        flags += 1
-                    if topright > val:
-                        flags += 2
-                    if botright > val:
-                        flags += 4
-                    if botleft > val:
-                        flags += 8
+                flags = 0
+                if topleft > value:
+                    flags += 1
+                if topright > value:
+                    flags += 2
+                if botright > value:
+                    flags += 4
+                if botleft > value:
+                    flags += 8
 
-                    # No interp yet, just get some basics going
-                    if flags == 0 or flags == 15:
-                        continue
-                    else:
-                        if topright != topleft:
-                            top_interp = abs(val-topleft) / abs(topright-topleft)
-                        if botright != botleft:
-                            bot_interp = abs(val-botleft) / abs(botright-botleft)
-                        if topright != botright:
-                            right_interp = abs(val-topright) / abs(botright-topright)
-                        if topleft != botleft:
-                            left_interp = abs(val-topleft) / abs(botleft-topleft)
+                if flags == 0 or flags == 15:
+                    # There is no contour here
+                    continue
+                else:
+                    if topright != topleft:
+                        top_interp = abs(value-topleft) / abs(topright-topleft)
+                    if botright != botleft:
+                        bot_interp = abs(value-botleft) / abs(botright-botleft)
+                    if topright != botright:
+                        right_interp = abs(value-topright) / abs(botright-topright)
+                    if topleft != botleft:
+                        left_interp = abs(value-topleft) / abs(botleft-topleft)
 
-                    top = (col+top_interp,row)
-                    right = (col+1.0,row+right_interp)
-                    bottom = (col+bot_interp,row+1.0)
-                    left = (col,row+left_interp)
+                top = (col+top_interp,row)
+                right = (col+1.0,row+right_interp)
+                bottom = (col+bot_interp,row+1.0)
+                left = (col,row+left_interp)
 
-                    if flags == 1 or flags == 14:
-                        iso.add(left,top)
-                    elif flags == 2 or flags == 13:
-                        iso.add(top,right)
-                    elif flags == 3 or flags == 12:
-                        iso.add(left,right)
-                    elif flags == 4 or flags == 11:
-                        iso.add(right,bottom)
-                    elif flags == 5:
-                        iso.add(top,right)
-                        iso.add(left,bottom)
-                    elif flags == 6 or flags == 9:
-                        iso.add(top,bottom)
-                    elif flags == 7 or flags == 8:
-                        iso.add(left,bottom)
-                    elif flags == 10:
-                        iso.add(left,top)
-                        iso.add(bottom,right)
+                if flags == 1 or flags == 14:
+                    iso.add(left,top)
+                elif flags == 2 or flags == 13:
+                    iso.add(top,right)
+                elif flags == 3 or flags == 12:
+                    iso.add(left,right)
+                elif flags == 4 or flags == 11:
+                    iso.add(right,bottom)
+                elif flags == 5:
+                    iso.add(top,right)
+                    iso.add(left,bottom)
+                elif flags == 6 or flags == 9:
+                    iso.add(top,bottom)
+                elif flags == 7 or flags == 8:
+                    iso.add(left,bottom)
+                elif flags == 10:
+                    iso.add(left,top)
+                    iso.add(bottom,right)
+        return iso
+
+    def get_topography(self,low=0.0,high=1.0,layers=5):
+        isovals = np.linspace(low,high,layers)
+        print(isovals)
+        #isos = [IsoLayer(i) for i in isovals]
+        isos = [self.get_isolayer(i) for i in isovals]
         return isos
 
     def astar(self,start,end):
