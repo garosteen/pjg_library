@@ -4,23 +4,24 @@ from noise import *
 
 class HeightMap:
     """
-    A HeightMap is essentially an array of values, but with some convenience utilities built in.
-    Values should be within 0-1
-    What sort of things?
+    A HeightMap is essentially an array of values with some convenience utilities built in.
+    It is intended to represent elevation or texture in a given area.
+    Values are assumed to be in range 0.0-1.0
     - Convenient auto-generation of random perlin noise
     - Set cutoff points
     - Get slope angles and such
     """
     def __init__(self,rows,cols=0):
-        # Initialize values to 0.5
+        """
+        If only one argument is given, the constructor creates a square HeightMap.
+        Values are initialized to 0.5.
+        """
         self.rows = rows
         self.cols = rows
         if cols != 0:
             self.cols = cols
-        #self.values = [[0.5 for r in range(rows)] for c in range(cols)]
         self.values = [[0.5 for c in range(cols)] for r in range(rows)]
     
-    # TODO: make sensible defaults for these, so I don't have to do it every time myself.
     def randomize(self,x_range=0,y_range=0,octaves=2,warpstrength=1.0,warpsize=0.5,warpoctaves=2):
         if x_range == 0:
             x_range = self.cols/10.0
@@ -118,6 +119,10 @@ class HeightMap:
         pass
 
 class IsoLayer:
+    """
+    An Isolayer represents a collection of contour curves for a specific value.
+    """
+
     def __init__(self,value):
         self.value = value
         self.curves = []
@@ -150,8 +155,14 @@ class IsoLayer:
         return self.curves
 
 class Curve:
+    """
+    A Curve is a sequence of points.
+    This should probably be called a Path instead of a Curve, since it doesn't actually
+have any curvature-related functionality.
+    """
     def __init__(self,start,end):
         self.points = [start,end]
+        self.tolerance = 0.01
 
     def get_start(self):
         return self.points[0]
@@ -162,8 +173,12 @@ class Curve:
     def add(self,other):
         compatible = self.get_compatibility(other)
 
+        if compatible == 0:
+            # Curves are not compatible.
+            return 0
         if compatible == 1:
             # start and other end are the same. Put other at the start, without its end
+            # Append self.points to other.points without its end
             self.points = other.points[:-1] + self.points
             #self.points = other.points + self.points
 
@@ -181,7 +196,17 @@ class Curve:
             #self.points = self.points + other.points[-2:-1:-1]
             self.points = self.points + other.points[-2::-1]
 
+
     def get_compatibility(self,other):
+        """
+        Checks whether two curves can be combined into one curve. Return code indicates
+        how the curves can be combined:
+        0: Not compatible
+        1: self.start == other.end
+        2: self.end   == other.start
+        3: self.start == other.start
+        4: self.end   == other.end
+        """
         start = self.get_start()
         end = self.get_end()
         other_start = other.get_start()
@@ -198,18 +223,17 @@ class Curve:
         end_start_diff_x = abs(end[0] - other_start[0])
         end_start_diff_y = abs(end[1] - other_start[1])
 
-        tolerance = 0.01
-        if start_end_diff_x < tolerance and start_end_diff_y < tolerance:
-            # start and other end are the same. Put other at the start, without its end
+        if start_end_diff_x < self.tolerance and start_end_diff_y < self.tolerance:
+            # start and other end are the same. 
             return 1
-        elif end_start_diff_x < tolerance and end_start_diff_y < tolerance:
-            # end and other start are the same. Place other at the end, without its start
+        elif end_start_diff_x < self.tolerance and end_start_diff_y < self.tolerance:
+            # end and other start are the same.
             return 2
-        elif start_diff_x < tolerance and start_diff_y < tolerance:
-            # same start points, reverse the other, don't include its start, and add to self
+        elif start_diff_x < self.tolerance and start_diff_y < self.tolerance:
+            # same start points
             return 3
-        elif end_diff_x < tolerance and end_diff_y < tolerance:
-            # same end points, reverse the other, don't include its end, add to self
+        elif end_diff_x < self.tolerance and end_diff_y < self.tolerance:
+            # same end points
             return 4
         else:
             return 0
