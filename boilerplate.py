@@ -1,7 +1,7 @@
 import os, sys
 sys.path.append('/Users/gosteen/dev/generative/')
-from genartutils import utilityfunctions as uf
-from genartutils import SketchBorder
+from pjg_library import utilityfunctions as uf
+from pjg_library import SketchBorder
 
 def boilerplate(vsk):
     paper_width_in = vsk.Param(7)

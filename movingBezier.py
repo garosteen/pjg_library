@@ -7,7 +7,7 @@ import bezier
 from .bezierUtilities import *
 
 class MovingBezier:
-    """A MovingBezier is a system of Bezier curves, in which each of the four points that define a bezier curve are 'moving' across their own paths. 
+    """A MovingBezier is a sequence of Bezier curves, in which each of the points that define a bezier curve are 'moving' across their own paths. 
     Get bezier curve for the system for any timestep from 0.0 to 1.0.
     By default, paths are initialized to random beziers with points within the radius of the bound.
     Set any of the paths to your own LineString if desired.
