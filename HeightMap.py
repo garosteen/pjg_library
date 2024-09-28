@@ -1,6 +1,7 @@
 import numpy as np
 import random
-from noise import *
+from noise import snoise3, snoise2
+from pjg_library.IsoLayer import IsoLayer
 
 class HeightMap:
     """
@@ -14,6 +15,9 @@ class HeightMap:
     - A shading function
         - Give it an angle 0-2PI for which slopes need to be shaded
         - The best thing to do might be to make a new HeightMap, populate it with 0/1 depending on if the slope at that point is within tolerance for being shaded, then create an IsoLayer to define the areas that are shaded. Probably would need the map to be bigger by 1 in every direction so that the isolines connect as needed on the edges.
+    - set_max / set_min, for customizable max/min values, make the randomize function use these
+    - erosion!
+
     """
     def __init__(self,rows,cols=0):
         """
@@ -50,9 +54,11 @@ class HeightMap:
         print(f"Min: {min_val} \nMax: {max_val}")
 
     def set(self,row,col,val):
+        # TODO: check range
         self.values[row][col] = val
 
     def get(self,row,col):
+        # TODO: check range
         return self.values[row][col]
 
     def get_values(self):
