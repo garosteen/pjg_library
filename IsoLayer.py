@@ -19,6 +19,11 @@ class IsoLayer:
         Given the start and end points of a segment, add that segment to this IsoLayer.
         If it matches the start or end of any existing paths, it will be appended to that path.
         Otherwise, it's added as a new path.
+
+        TODO:
+        Are there more efficient ways to merge the paths?
+        I'm currently checking the path compatibility twice for each join.
+        What if the ends of the paths were in a sort of quad tree, so we only check things that are likely to be close?
         """
         # Check if line is compatible with any others
         curve = Path(start,end)
@@ -31,6 +36,7 @@ class IsoLayer:
                     match_1 = index
                 else:
                     match_2 = index
+                    break
         
         if match_1 == -1:
             # No match, just add the curve
