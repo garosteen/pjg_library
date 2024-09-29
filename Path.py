@@ -1,12 +1,20 @@
+import random
+
 class Path:
     """
     A Path is a sequence of points.
     Use the add(other) method to try to combine multiple paths.
     If either of their start or end points are within the tolerance value,
     the other path will be added to this path.
+
     TODO:
     - Some sort of smoothing function?
     - Cropping -- start/end/point, percentage
+    - Should you be able to add paths that aren't compatible? Connect the closest start/end points?
+
+    How should cropping work?
+    Give it a percentage, or a distance to crop?
+    add should be called merge
 
     """
     def __init__(self,start,end):
@@ -87,4 +95,44 @@ class Path:
         else:
             return 0
 
+    def is_loop(self):
+        # TODO: should this be a boolean that gets checked when points are added or removed, or should I just call this whenever I need?
+        # I guess, how computationally complex is this really?
+        start = self.get_start()
+        end = self.get_end()
+        diff_x = abs(start[0] - end[0])
+        diff_y = abs(start[1] - end[1])
+
+        if diff_x < self.tolerance and diff_y < self.tolerance:
+            return True
+        return False
+
+    def shift(self, percentage=None):
+        """
+        Randomly shifts the order of points, to offset the start point.
+        Doesn't check that this is a loop, so you can use this at your own peril.
+        """
+        num_points = len(self.points)
+        if percentage is None:
+            percentage = random.random()
+        # new_start = random.randint(0,num_points-1)
+        new_start = int( percentage * num_points % num_points)
+        self.points = self.points[new_start:] + self.points[:new_start]
+
+    def crop(self, percentage = None, from_start = True):
+        # Ridiculously, just going to randomly crop them for now
+        # I need to choose which end to crop
+
+        if self.is_loop():
+            self.shift()
+        if percentage is None:
+            percentage = random.random() * 0.5
+        crop_num = int(percentage * len(self.points))
+        if percentage >= 1.0:
+            self.points = [self.points[0]]
+            return
+        if from_start:
+            self.points = self.points[crop_num:]
+        else:
+            self.points = self.points[0:len(self.points)-crop_num]
 
