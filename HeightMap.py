@@ -22,13 +22,13 @@ class HeightMap:
     def __init__(self,rows,cols=0):
         """
         If only one argument is given, the constructor creates a square HeightMap.
-        Values are initialized to 0.5.
+        Values are initialized to 0.
         """
         self.rows = rows
         self.cols = rows
         if cols != 0:
             self.cols = cols
-        self.values = [[0.5 for c in range(cols)] for r in range(rows)]
+        self.values = np.zeros((rows,cols))
     
     def randomize(self,x_range=0,y_range=0,octaves=2,warpstrength=1.0,warpsize=0.5,warpoctaves=2):
         if x_range == 0:
@@ -41,17 +41,13 @@ class HeightMap:
         x_start = random.random()*10000
         y_start = random.random()*10000
         self.values = np.array([[(snoise3(x+x_start,y+y_start,warpstrength*snoise2(x*warpsize+x_start,y*warpsize+y_start,octaves=warpoctaves),octaves=octaves)+1.0) / 2.0 for x in x_coords] for y in y_coords])
-        neg = False
-        min_val = 0.5
-        max_val = 0.5
-        for row in range(self.rows):
-            for col in range(self.cols):
-                val = self.values[row][col]
-                if val < min_val:
-                    min_val = val
-                if val > max_val:
-                    max_val = val
-        print(f"Min: {min_val} \nMax: {max_val}")
+
+    def gaussian(self, sigma=1.0, spread = 3.0):
+        x = np.linspace(-spread, spread, self.cols)
+        # TODO: adjust x/y spread individually
+        y = np.linspace(-spread, spread, self.rows)
+        X, Y = np.meshgrid(x, y)
+        self.values = np.exp(-(X**2 + Y**2) / (2 * sigma**2))
 
     def set(self,row,col,val):
         # TODO: check range
@@ -94,6 +90,9 @@ class HeightMap:
                     iso.marching_squares(row, col, topleft, topright, botleft, botright)
 
         return isos
+
+    def average(self, other):
+        self.values = (self.values + other.values) / 2.0
 
     def astar(self,start,end):
         # This should eventually be implemented here
