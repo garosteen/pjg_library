@@ -129,4 +129,4 @@ When adding new utilities:
 
 ## License
 
-[Include your license information here]
+See LICENSE file for complete licensing information. This library is licensed under the GNU General Public License v3.0.
