@@ -11,6 +11,7 @@ class Path:
     - Some sort of smoothing function?
     - Cropping -- start/end/point, percentage
     - Should you be able to add paths that aren't compatible? Connect the closest start/end points?
+    - add/merge/shift/crop should return this, so that you can chain the method if necessary
 
     How should cropping work?
     Give it a percentage, or a distance to crop?
