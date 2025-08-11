@@ -13,7 +13,7 @@ def boilerplate(vsk):
 def sketch_setup(sketch, vsk):
     sketch_width = uf.in_to_cm(sketch.paper_width_in) # 9in
     sketch_height = uf.in_to_cm(sketch.paper_height_in) # 12in
-    vsk.size(width=str(sketch_width)+"cm",height=str(sketch_height)+"cm",landscape=False)
+    vsk.size(width=str(sketch_width)+"cm",height=str(sketch_height)+"cm",landscape=False,center=False)
     width = uf.in_to_cm(sketch.target_width_in) 
     height = uf.in_to_cm(sketch.target_height_in)
     vsk.scale("cm")
