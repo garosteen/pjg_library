@@ -1,5 +1,6 @@
-from shapely.geometry import LineString,MultiLineString
+from shapely.geometry import LineString,MultiLineString, LinearRing, Polygon, Point
 import numpy as np
+import math
 
 def cm(n):
     return str(n)+'cm'
@@ -54,6 +55,45 @@ def getxy(startx,starty,radius,theta):
     x = startx + np.cos(theta)*radius
     y = starty + np.sin(theta)*radius
     return (x,y)
+
+def get_all_coords(geom):
+    """Given any geometry, return an array of all of its coordinates."""
+    coords = []
+    if isinstance(geom, (Point, LineString, LinearRing)):
+        coords.extend(list(geom.coords))
+    elif isinstance(geom, Polygon):
+        coords.extend(list(geom.exterior.coords))
+        # There's a duplicate point in exterior/interior, but I don't think that's a problem.
+        for interior in geom.interiors:
+            coords.extend(list(interior.coords))
+    elif hasattr(geom, 'geoms'):
+        for sub_geom in geom.geoms:
+            coords.extend(get_all_coords(sub_geom))
+
+    return coords
+
+def get_bounding_angles(center, geom):
+    # Go through every point in the polygon, get angle.
+    min_theta = 2 * math.pi
+    max_theta = 0.0
+
+    coords = get_all_coords(geom)
+    # TODO: if center is WITHIN geom, return
+    if geom.contains(center):
+        return(0.0, 2 * math.pi)
+
+    for p in coords:
+        
+        theta = math.atan2(p[1] - center.y, p[0] - center.x)
+        if (theta < 0.0):
+            theta += 2 * math.pi
+        if (theta < min_theta):
+            min_theta = theta
+        if (theta > max_theta):
+            max_theta = theta
+
+    print(f"{min_theta}, {max_theta}")
+    return (min_theta,max_theta)
 
 class Grid:
     """Convenience class to make it easier to subdivide space into a grid.
