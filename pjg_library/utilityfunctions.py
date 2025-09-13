@@ -92,7 +92,7 @@ def get_bounding_angles(center, geom):
         if (theta > max_theta):
             max_theta = theta
 
-    print(f"{min_theta}, {max_theta}")
+    #print(f"{min_theta}, {max_theta}")
     return (min_theta,max_theta)
 
 class Grid:
