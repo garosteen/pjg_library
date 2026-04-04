@@ -23,10 +23,11 @@ class SketchBorder:
         self.seed = seed
         self.buffer = buffer 
 
-        self.top = 0 - self.height/2.0 + self.buffer
-        self.bottom = self.height/2.0 - self.buffer
-        self.left = 0 - self.width/2.0 + self.buffer
-        self.right = self.width/2.0 - self.buffer
+        self.top = self.buffer
+        self.bottom = self.height - self.buffer
+        self.left = self.buffer
+        self.right = self.width - self.buffer
+        self.center = (width/2.0, height/2.0)
 
         self.charheight = 0.5
 
@@ -41,27 +42,30 @@ class SketchBorder:
         #display.x = display.x + display.spacing
 
     def get_bound(self):
-        """Returns a Shapely Polygon bound for the drawing, so it may avoid intersecting the text."""
+        """Return a Shapely Polygon for the bounds of the image, which is the paper size minus the buffer."""
         top = self.top
         bottom = self.bottom
         left = self.left
         right = self.right
-        s = self.display.spacing
-        cw = self.display.charwidth
-        stampright = self.display.x + self.display.getwidth()
-        stamptop = bottom - self.display.charheight - s - s
-        nameright = left + 15*(cw+s) + s + s 
-        nametop = self.display.y - s
-
-        bound = Polygon([(left,top),(right,top),(right,bottom),(stampright,bottom),(stampright,stamptop),(nameright,stamptop),(nameright,nametop),(left,nametop)])
+        #s = self.display.spacing
+        #cw = self.display.charwidth
+        #stampright = self.display.x + self.display.getwidth()
+        #stamptop = bottom - self.display.charheight - s - s
+        #nameright = left + 15*(cw+s) + s + s 
+        #nametop = self.display.y - s
+        bound = Polygon([(left,top),(right,top),(right,bottom),(left,bottom)])
+        print(bound)
+        #bound = Polygon([(left,top),(right,top),(right,bottom),(stampright,bottom),(stampright,stamptop),(nameright,stamptop),(nameright,nametop),(left,nametop)])
         return bound
         
     def get_frame(self):
-        t = 0-self.height/2.0
-        b = self.height/2.0
-        l = 0-self.width/2.0
-        r = self.width/2.0
-        return Polygon([(l,t),(r,t),(r,b),(l,b)])
+        #t = 0-self.height/2.0
+        #b = self.height/2.0
+        #l = 0-self.width/2.0
+        #r = self.width/2.0
+        #return Polygon([(0,0),(self.width,0),(self.width,self.height),(0,self.height)])
+        return Polygon([(self.left,self.top),(self.right,self.top),(self.right,self.bottom),(self.left,self.bottom)])
+        #return Polygon([(l,t),(r,t),(r,b),(l,b)])
 
 
     def get_border(self):

@@ -28,7 +28,7 @@ class HeightMap:
         self.cols = rows
         if cols != 0:
             self.cols = cols
-        self.values = np.zeros((rows,cols))
+        self.values = np.zeros((self.rows,self.cols))
     
     def randomize(self,x_range=0,y_range=0,octaves=2,warpstrength=1.0,warpsize=0.5,warpoctaves=2):
         if x_range == 0:
@@ -51,6 +51,7 @@ class HeightMap:
 
     def set(self,row,col,val):
         # TODO: check range
+
         self.values[row][col] = val
 
     def get(self,row,col):

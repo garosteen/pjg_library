@@ -50,6 +50,7 @@ def crop_linestring(bound,ls):
 
     return MultiLineString(lines)
 
+# TODO: rename to something like polar_to_xy
 def getxy(startx,starty,radius,theta):
     """Get an x,y tuple based on starting coordinate, distance, and angle"""
     x = startx + np.cos(theta)*radius
@@ -94,6 +95,11 @@ def get_bounding_angles(center, geom):
 
     #print(f"{min_theta}, {max_theta}")
     return (min_theta,max_theta)
+
+def upscale(grid, level=2):
+    # Doubles the size of a 2d array
+    # copy each cell to right, bottom-right, and bottom
+    return [[grid[row//level][col//level] for col in range(len(grid[0]*level))] for row in range(len(grid)*level)]
 
 class Grid:
     """Convenience class to make it easier to subdivide space into a grid.
