@@ -22,17 +22,17 @@ def bezier_to_linestring(b, granularity = 0.01):
 
     return LineString(points)
 
-def random_bezier(bound = 100):
+def random_bezier(bound = 100, center = (0,0)):
     """Returns a bezier curve object with points randomized between -bound and bound."""
 
-    x1 = random.random()*2*bound - bound
-    y1 = random.random()*2*bound - bound
-    x2 = random.random()*2*bound - bound
-    y2 = random.random()*2*bound - bound
-    x3 = random.random()*2*bound - bound
-    y3 = random.random()*2*bound - bound
-    x4 = random.random()*2*bound - bound
-    y4 = random.random()*2*bound - bound
+    x1 = random.random()*2*bound - bound + center[0]
+    y1 = random.random()*2*bound - bound + center[1]
+    x2 = random.random()*2*bound - bound + center[0]
+    y2 = random.random()*2*bound - bound + center[1]
+    x3 = random.random()*2*bound - bound + center[0]
+    y3 = random.random()*2*bound - bound + center[1]
+    x4 = random.random()*2*bound - bound + center[0]
+    y4 = random.random()*2*bound - bound + center[1]
     nodes = [[x1,x2,x3,x4],
             [y1,y2,y3,y4]]
     return bezier.Curve.from_nodes(nodes)

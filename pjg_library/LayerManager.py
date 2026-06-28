@@ -1,8 +1,8 @@
 import vsketch
 from shapely.geometry import GeometryCollection, Polygon
 from shapely.validation import make_valid
+from pjg_library import utilityfunctions as uf
 import random
-
 
 """
 Goals of layer manager:
@@ -56,11 +56,26 @@ class LayerManager:
             layer = random.randint(0,self.n-1)
         if geom.geom_type is "GeometryCollection":
             for element in geom.geoms:
-                element = make_valid(self.bound.intersection(element))
-                self.layers[layer].append(element)
+                #print(element.geom_type)
+                self.add_single_geom(element, layer)
         else:
-            geom = make_valid(self.bound.intersection(geom))
-            self.layers[layer].append(geom)
+            self.add_single_geom(geom, layer)
+
+    """
+    Only use this after guaranteeing that the geom is simple
+    (i.e. not a collection)
+    """
+    def add_single_geom(self, geom, layer=None):
+        if layer is None:
+            layer = random.randint(0,self.n-1)
+        if (geom.geom_type == "LineString"):
+            geom = uf.crop_linestring(self.bound, geom)
+        else:
+            geom = make_valid(self.bound.intersection(element))
+        while layer >= len(self.layers):
+            self.layers.append([])
+
+        self.layers[layer].append(geom)
 
     def draw_to_vsketch(self, vsk: vsketch.Vsketch):
         stroke = 1

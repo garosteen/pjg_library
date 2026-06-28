@@ -15,11 +15,12 @@ class MovingBezier:
 
 # TODO: What difference is there from interpolating over a linestring vs evaluating a bezier at t? They must have somewhat different output.
 
-    def __init__(self,bound=10,num_paths=4):
+    def __init__(self,bound=10, center=(0,0), num_paths=4):
         self.bound = bound # Radius to contain randomly generated values within
+        self.center = center # Center for random points
         self.paths = []
         for i in range(num_paths):
-            self.paths.append(bezier_to_linestring(random_bezier(bound = self.bound)))
+            self.paths.append(bezier_to_linestring(random_bezier(bound = self.bound, center=self.center)))
 
     def set_path(self, path: LineString,index=0,):
         self.paths[index] = path

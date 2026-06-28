@@ -10,15 +10,13 @@ def boilerplate(vsk):
     target_height_in = vsk.Param(14.0)
     test = vsk.Param(1)
 
-def sketch_setup(sketch, vsk):
-    sketch_width = uf.in_to_cm(sketch.paper_width_in) # 9in
-    sketch_height = uf.in_to_cm(sketch.paper_height_in) # 12in
-    vsk.size(width=str(sketch_width)+"cm",height=str(sketch_height)+"cm",landscape=False,center=False)
-    width = uf.in_to_cm(sketch.paper_width_in) 
-    height = uf.in_to_cm(sketch.paper_height_in)
+def sketch_setup(sketch, vsk, width_in =7.0, height_in =5.0):
+    width_cm = uf.in_to_cm(width_in) 
+    height_cm = uf.in_to_cm(height_in)
+    vsk.size(width=str(width_cm)+"cm",height=str(height_cm)+"cm",landscape=False,center=False)
     vsk.scale("cm")
     seed = vsk.random_seed
-    sb = SketchBorder.SketchBorder(width,height,seed=seed)
+    sb = SketchBorder.SketchBorder(width_cm,height_cm,seed=seed)
     bound = sb.get_bound()
 
     return sb
