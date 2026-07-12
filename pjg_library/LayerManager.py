@@ -41,18 +41,7 @@ class LayerManager:
             self.height = 2.54*height
             self.margin = 2.54*margin
 
-        # Create the cells:
-        self.col_width =  self.width / self.cols
-        self.row_height = self.height / self.rows
-        for row in range(rows):
-            for col in range(cols):
-                originx = col * self.col_width
-                originy = row * self.row_height
-                self.cells.append(LayerManagerCell((originx, originy), (self.col_width, self.row_height), self.margin))
-
-
-        self.centerx = self.col_width/2.0
-        self.centery = self.row_height/2.0
+        self.set_cells(self.rows, self.cols)
 
     def add(self, geom, layer=None, cell=None):
         if cell is None:
@@ -72,6 +61,30 @@ class LayerManager:
 
     def set_cell(self, cell):
         self.current_cell = cell % len(self.cells)
+
+    def next(self):
+        self.current_cell = (self.current_cell + 1 ) % len(self.cells)
+
+    def set_cells(self, rows=0, cols=0):
+        self.cells = []
+        self.rows = rows
+        self.cols = cols
+        self.col_width  =  self.width / self.cols
+        self.row_height =  self.height / self.rows
+        for row in range(self.rows):
+            for col in range(self.cols):
+                originx = col * self.col_width
+                originy = row * self.row_height
+                self.cells.append(LayerManagerCell((originx, originy), (self.col_width, self.row_height), self.margin))
+
+        self.centerx = self.col_width/2.0
+        self.centery = self.row_height/2.0
+
+    def get_current_width(self):
+        return self.cells[self.current_cell].width
+
+    def get_current_height(self):
+        return self.cells[self.current_cell].height
 
 
 
