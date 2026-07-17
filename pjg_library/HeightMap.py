@@ -30,7 +30,10 @@ class HeightMap:
             self.cols = cols
         self.values = np.zeros((self.rows,self.cols))
     
-    def randomize(self,x_range=0,y_range=0,octaves=2,warpstrength=1.0,warpsize=0.5,warpoctaves=2):
+    def randomize(self,x_range=0,y_range=0,octaves=2,warpstrength=0.0,warpsize=0.5,warpoctaves=2):
+        # TODO: this shouldn't normalize it to have a min of 0, that can be its own function
+        # TODO: This shouldn't require a warp, 
+        # TODO: Randomizing functions should be more specific (perlin, random, warp, etc.)
         if x_range == 0:
             x_range = self.cols/10.0
         if y_range == 0:

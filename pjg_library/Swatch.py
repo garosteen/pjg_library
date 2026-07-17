@@ -1,5 +1,5 @@
 from shapely.geometry import LineString, Polygon, Point, GeometryCollection
-from pjg_private import Fill
+from pjg_library import Fill
 """
 Goals of this class:
     Embed a stylish little color test / color swatch in a corner of my other sketches

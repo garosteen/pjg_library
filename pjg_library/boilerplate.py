@@ -10,6 +10,7 @@ def boilerplate(vsk):
     target_height_in = vsk.Param(14.0)
     test = vsk.Param(1)
 
+# Deprecated, use LayerManager.setup(vsk) instead
 def sketch_setup(sketch, vsk, width_in =7.0, height_in =5.0):
     width_cm = uf.in_to_cm(width_in) 
     height_cm = uf.in_to_cm(height_in)

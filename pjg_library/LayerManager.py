@@ -43,6 +43,10 @@ class LayerManager:
 
         self.set_cells(self.rows, self.cols)
 
+    def setup(self, vsk: vsketch.Vsketch):
+        vsk.size(width=str(self.width)+"cm",height=str(self.height)+"cm",landscape=False,center=False)
+        vsk.scale("cm")
+
     def add(self, geom, layer=None, cell=None):
         if cell is None:
             cell = self.current_cell
@@ -115,23 +119,22 @@ class LayerManagerCell:
     def add(self, geom, layer=None):
         if layer is None:
             layer = random.randint(0,len(self.layers)-1)
-        if geom.geom_type is "GeometryCollection":
-            for element in geom.geoms:
-                self.add_single_geom(element, layer)
-        else:
-            self.add_single_geom(geom, layer)
+        self.add_single_geom(geom, layer)
 
     """
     Only use this after guaranteeing that the geom is simple
     (i.e. not a collection)
     """
     def add_single_geom(self, geom, layer=None):
+        if geom.geom_type == "GeometryCollection":
+            for element in geom.geoms:
+                self.add_single_geom(element, layer)
         if layer is None:
             layer = random.randint(0,self.n-1)
         if (geom.geom_type == "LineString"):
             geom = uf.crop_linestring(self.bound, geom)
         else:
-            geom = make_valid(self.bound.intersection(element))
+            geom = make_valid(self.bound.intersection(geom))
         while layer >= len(self.layers):
             self.layers.append([])
 
