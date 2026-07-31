@@ -90,6 +90,11 @@ class LayerManager:
     def get_current_height(self):
         return self.cells[self.current_cell].height
 
+    def get_current_center(self):
+        w = self.cells[self.current_cell].width
+        h = self.cells[self.current_cell].height
+        return (w/2.0, h/2.0)
+
 
 
 class LayerManagerCell:

@@ -18,6 +18,9 @@ class HeightMap:
     - set_max / set_min, for customizable max/min values, make the randomize function use these
     - erosion!
 
+    TODO:
+        - set to existing array of values
+
     """
     def __init__(self,rows,cols=0):
         """
