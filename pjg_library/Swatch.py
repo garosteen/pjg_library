@@ -1,4 +1,5 @@
 from shapely.geometry import LineString, Polygon, Point, GeometryCollection
+import random
 from pjg_library import Fill
 """
 Goals of this class:
@@ -19,6 +20,8 @@ Goals of this class:
 
     TODO:
     Need a standard straightline fill method
+    I feel like I should be able to give the swatch a width and height and x and y, and have it use those coordinates
+    Should I give swatch a layermanager? 
 """
 
 """
@@ -28,21 +31,24 @@ Be myself!
 
 
 class Swatch:
-    gap = 0.5 # grid units
-    def __init__(self, numColors: int, gridSize = 0.5, xoff=0.0, yoff=0.0):
+    def __init__(self, numColors: int, x, y, width, height):
         self.numColors = numColors
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.set_grid_size(rows = self.numColors, cols = self.numColors)
         self.layers = [[] for color in range(numColors)]
         self.fill = Fill.Fill()
         self.geometryCollection = GeometryCollection()
-        self.gridSize = gridSize
-        self.radiant_offset = -self.gridSize
-        self.xoff = xoff
-        self.yoff = yoff
         # So, the problem is that I don't know what yoff is going to be until I create the swatch.
         # Should I have a direction that the swatch builds in? So that I can say yoff is paperheight - 1, and then the swatches go negative from there, instead of positive?
         # Should I just have a set xoff and set yoff method? Translates it for me?
         # I could have a "recalibrate for height and width" method?
-        # 
+
+    def set_grid_size(self, rows, cols):
+        self.col_width = self.width / cols
+        self.row_height = self.height / rows
 
     def get_bounds(self):
         return self.geometryCollection.bounds
@@ -60,24 +66,26 @@ class Swatch:
     from start_density to end_density.
     """
     def swatch_line(self, layer, row, col, rowstep, colstep, steps, start_density, end_density):
-        g = self.gridSize
-        gap = self.gap * self.gridSize
+        w = self.col_width
+        h = self.row_height
+        # gap = self.gap * self.gridSize
         for step in range(steps):
+            # TODO: do I really need a conditional here? That seems crazy, surely I can calculate density in one go
             if steps > 1:
                 density = start_density + (step/(steps-1)) * (end_density - start_density)
             else:
                 density = start_density
             cur_row = row + step*rowstep
             cur_col = col + step*colstep
-            x = cur_col * (g+gap)
-            y = cur_row * (g+gap)
-            box = [[self.xoff+x,  self.yoff+y-g],
-                   [self.xoff+x+g,self.yoff+y-g],
-                   [self.xoff+x+g,self.yoff+y],
-                   [self.xoff+x  ,self.yoff+y]]
+            x = cur_col * (w)
+            y = cur_row * (h)
+            box = [[self.x+x,  self.y+y-h],
+                   [self.x+x+w,self.y+y-h],
+                   [self.x+x+w,self.y+y],
+                   [self.x+x  ,self.y+y]]
             poly = Polygon(box)
             # TODO: this fill should be adjustable to different fill methods
-            f = self.fill.radial_fill(poly, radiant=Point(self.xoff+x+self.radiant_offset, self.yoff+y+self.radiant_offset), density=density)
+            f = self.fill.radial_fill(poly, radiant=Point(self.x+x+self.radiant_offset, self.y+y+self.radiant_offset), density=density)
             self.layers[layer].append(f)
             self.geometryCollection = GeometryCollection([self.geometryCollection, f])
 
@@ -96,9 +104,38 @@ class Swatch:
     def triangle_blend(self):
         density = 0.6 # 0.7 is too much for the fountain pens, not enough showing through.
         for c in range(self.numColors):
-            self.radiant_offset = -self.gridSize
-            self.swatch_line(c, -c, 0, -0, 1, self.numColors-c, density, density)
-            self.radiant_offset = 2*self.gridSize
-            self.swatch_line(c, -c, 0, 1, 1, c+1, density, density)
+            self.radiant_offset = -self.row_height
+            self.swatch_line(c, self.numColors-c, 0, -0, 1, self.numColors-c, density, density)
+            self.radiant_offset = 2*self.col_width
+            self.swatch_line(c, self.numColors-c, 0, 1, 1, c+1, density, density)
         return self.layers
 
+    def barcode(self):
+        # TODO; there's a little foot at the bottom of each one
+        x = self.x
+        y = self.y
+        w = self.width
+        h = self.height
+        y_start = y
+        layer = 0
+        pen = 0.025
+        while (x < w):
+            y = y_start
+            layer = random.randint(0,self.numColors-1)
+            # Wouldn't it make more sense to pick a number of lines to draw?
+            num_lines = random.randint(1,10)
+            #width = random.random()*0.25
+            #width_end = x + width
+            coords = []
+            direction = 1
+            current_line = 0
+            while (current_line < num_lines):
+                coords.append((x, y))
+                y = y + (h * direction)
+                coords.append((x, y))
+                x = x + pen
+                direction = direction * -1
+                current_line += 1
+            line = LineString(coords)
+            self.layers[layer].append(line) 
+        return self.layers
