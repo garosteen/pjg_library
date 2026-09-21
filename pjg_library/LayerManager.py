@@ -103,10 +103,10 @@ class LayerManager:
 
 class LayerManagerCell:
     def __init__(self, origin=(0,0), dimensions=(0,0), margin=0.25):
-        self.origin = origin
-        self.dimensions = dimensions
-        self.width = self.dimensions[0]
-        self.height = self.dimensions[1]
+        self.origin = (origin[0]+margin, origin[1]+margin)
+        self.width = dimensions[0] - 2*margin
+        self.height = dimensions[1] - 2*margin
+        self.dimensions = dimensions # Dimensions represents the size including the margin
         self.margin = margin
         self.originx = self.origin[0]
         self.originy = self.origin[1]
@@ -116,10 +116,14 @@ class LayerManagerCell:
         self.layers = [[]]
 
         # TODO: radius for edges?
-        self.bound = Polygon([(self.margin, self.margin),
-                              (self.width-self.margin,self.margin),
-                              (self.width-self.margin,self.height-self.margin),
-                              (self.margin,self.height-self.margin)])
+        self.bound = Polygon([(0,0),
+                              (self.width, 0),
+                              (self.width, self.height),
+                              (0,self.height)])
+        #self.bound = Polygon([(self.margin, self.margin),
+        #                      (self.width-self.margin,self.margin),
+        #                      (self.width-self.margin,self.height-self.margin),
+        #                      (self.margin,self.height-self.margin)])
 
     """
     Add the specified geometry to the layer

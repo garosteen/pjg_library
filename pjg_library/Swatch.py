@@ -111,7 +111,8 @@ class Swatch:
         return self.layers
 
     def barcode(self):
-        # TODO; there's a little foot at the bottom of each one
+        # TODO: the right side gets cropped badly and leaves a little foot
+        # TODO: should be able to decide whether this is vertical or horizontal
         x = self.x
         y = self.y
         w = self.width
@@ -122,10 +123,7 @@ class Swatch:
         while (x < w):
             y = y_start
             layer = random.randint(0,self.numColors-1)
-            # Wouldn't it make more sense to pick a number of lines to draw?
             num_lines = random.randint(1,10)
-            #width = random.random()*0.25
-            #width_end = x + width
             coords = []
             direction = 1
             current_line = 0
