@@ -1,5 +1,6 @@
 import vsketch
 from shapely.geometry import GeometryCollection, Polygon
+from shapely.geometry.base import BaseGeometry
 from shapely.validation import make_valid
 from pjg_library import utilityfunctions as uf
 import random
@@ -52,8 +53,9 @@ class LayerManager:
             cell = self.current_cell
 
         if cell > len(self.cells):
-            print("Cell number too high in LayerManager.add")
-            return
+            print(f"Cell {cell} too high in LayerManager.add")
+            cell = cell % len(self.cells)
+            print(f"New cell number: {cell}")
         self.cells[cell].add(geom, layer)
 
     def get(self, layer):
@@ -90,11 +92,13 @@ class LayerManager:
     def get_current_height(self):
         return self.cells[self.current_cell].height
 
+    def get_current_margin(self):
+        return self.cells[self.current_cell].margin
+
     def get_current_center(self):
         w = self.cells[self.current_cell].width
         h = self.cells[self.current_cell].height
         return (w/2.0, h/2.0)
-
 
 
 class LayerManagerCell:
@@ -122,20 +126,20 @@ class LayerManagerCell:
     If layer is not specified, adds to a random layer.
     """
     def add(self, geom, layer=None):
-        if layer is None:
-            layer = random.randint(0,len(self.layers)-1)
-        self.add_single_geom(geom, layer)
+        if not (isinstance(geom, BaseGeometry)):
+            # Not a Shapely BaseGeometry, assume it's an iterable list of geometries
+            l = layer
+            for i, g in enumerate(geom):
+                if layer is None:
+                    l = i
+                self.add(g, l)
+            return
 
-    """
-    Only use this after guaranteeing that the geom is simple
-    (i.e. not a collection)
-    """
-    def add_single_geom(self, geom, layer=None):
         if geom.geom_type == "GeometryCollection":
             for element in geom.geoms:
-                self.add_single_geom(element, layer)
+                self.add(element, layer)
         if layer is None:
-            layer = random.randint(0,self.n-1)
+            layer = random.randint(0,len(self.layers)-1)
         if (geom.geom_type == "LineString"):
             geom = uf.crop_linestring(self.bound, geom)
         else:
