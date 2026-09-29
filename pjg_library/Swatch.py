@@ -127,7 +127,7 @@ class Swatch:
             coords = []
             direction = 1
             current_line = 0
-            while (current_line < num_lines):
+            while (current_line < num_lines and x < w):
                 coords.append((x, y))
                 y = y + (h * direction)
                 coords.append((x, y))
