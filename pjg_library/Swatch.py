@@ -22,6 +22,13 @@ Goals of this class:
     Need a standard straightline fill method
     I feel like I should be able to give the swatch a width and height and x and y, and have it use those coordinates
     Should I give swatch a layermanager? 
+    It doesn't make sense for this to be a "swatch" object, I mostly need every method to be independent.
+    So I shouldn't be returning the self.layers, and self shouldn't even *have* a layers section
+
+    Should Swatch have x, y, w, h at all?
+    It's potentially a convenience, so I don't have to keep passing around the values when I'm calling other functions.
+    If so, should the individual functions set those values when they receive them?
+    Maybe the simplest thing is to get rid of it.
 """
 
 """
@@ -32,6 +39,7 @@ Be myself!
 
 class Swatch:
     def __init__(self, numColors: int, x, y, width, height):
+        # TODO: Swatch should have the pen width
         self.numColors = numColors
         self.x = x
         self.y = y
@@ -41,10 +49,6 @@ class Swatch:
         self.layers = [[] for color in range(numColors)]
         self.fill = Fill.Fill()
         self.geometryCollection = GeometryCollection()
-        # So, the problem is that I don't know what yoff is going to be until I create the swatch.
-        # Should I have a direction that the swatch builds in? So that I can say yoff is paperheight - 1, and then the swatches go negative from there, instead of positive?
-        # Should I just have a set xoff and set yoff method? Translates it for me?
-        # I could have a "recalibrate for height and width" method?
 
     def set_grid_size(self, rows, cols):
         self.col_width = self.width / cols
@@ -64,11 +68,17 @@ class Swatch:
     """
     swatch_line creates a sequence of swatches, starting from (row, col) and moving (rowstep, colstep) for steps,
     from start_density to end_density.
+
+    Could I generalize this like crazy? Give it a function for what to draw at each square?
+    Then I could use this for LOTS of things. Nested circles, for instance.
     """
-    def swatch_line(self, layer, row, col, rowstep, colstep, steps, start_density, end_density):
-        w = self.col_width
-        h = self.row_height
-        # gap = self.gap * self.gridSize
+    def swatch_line(self, x, y, w, h, layer, row, col, rowstep, colstep, steps, start_density, end_density):
+        # TODO: name this more accurately? It's a single layer sequence of swatches
+        # TODO: pass it the function to draw to each thing?
+        swatches = []
+        col_w = w / self.numColors
+        row_h = h / self.numColors
+        # TODO: gap? Or would this be handled by the drawing function?
         for step in range(steps):
             # TODO: do I really need a conditional here? That seems crazy, surely I can calculate density in one go
             if steps > 1:
@@ -77,18 +87,19 @@ class Swatch:
                 density = start_density
             cur_row = row + step*rowstep
             cur_col = col + step*colstep
-            x = cur_col * (w)
-            y = cur_row * (h)
-            box = [[self.x+x,  self.y+y-h],
-                   [self.x+x+w,self.y+y-h],
-                   [self.x+x+w,self.y+y],
-                   [self.x+x  ,self.y+y]]
+            cur_x = x + (cur_col * (col_w))
+            cur_y = y + (cur_row * (row_h))
+            box = [[cur_x, cur_y],
+                   [cur_x+col_w,cur_y],
+                   [cur_x+col_w,cur_y+row_h],
+                   [cur_x,cur_y+row_h]]
             poly = Polygon(box)
             # TODO: this fill should be adjustable to different fill methods
-            f = self.fill.radial_fill(poly, radiant=Point(self.x+x+self.radiant_offset, self.y+y+self.radiant_offset), density=density)
-            self.layers[layer].append(f)
-            self.geometryCollection = GeometryCollection([self.geometryCollection, f])
-
+            radiant = Point(cur_x + (col_w/2.0) + self.radiant_offset, 
+                            cur_y + (row_h/2.0) + self.radiant_offset) 
+            f = self.fill.radial_fill(poly, radiant=radiant, density=density)
+            swatches.append(f)
+        return swatches
 
     def vertical_swatch(self):
         g = self.gridSize
@@ -101,22 +112,23 @@ class Swatch:
 
         return self.layers
         
-    def triangle_blend(self):
+    def triangle_blend(self, x, y, w, h):
         density = 0.6 # 0.7 is too much for the fountain pens, not enough showing through.
+        layers = [[] for c in range(self.numColors)]
         for c in range(self.numColors):
-            self.radiant_offset = -self.row_height
-            self.swatch_line(c, self.numColors-c, 0, -0, 1, self.numColors-c, density, density)
-            self.radiant_offset = 2*self.col_width
-            self.swatch_line(c, self.numColors-c, 0, 1, 1, c+1, density, density)
-        return self.layers
+            print(c)
+            self.radiant_offset = (w / self.numColors) * 1.25
+            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, -0, 1, self.numColors-c, density, density)
+            layers[c].append(swatches)
+            self.radiant_offset = self.radiant_offset*-1
+            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, 1, 1, c+1, density, density)
+            layers[c].append(swatches)
+        print(len(layers))
+        return layers
 
-    def barcode(self):
-        # TODO: the right side gets cropped badly and leaves a little foot
+    def barcode(self, x, y, w, h):
         # TODO: should be able to decide whether this is vertical or horizontal
-        x = self.x
-        y = self.y
-        w = self.width
-        h = self.height
+        layers = [[] for c in range(self.numColors)]
         y_start = y
         layer = 0
         pen = 0.025
@@ -135,5 +147,5 @@ class Swatch:
                 direction = direction * -1
                 current_line += 1
             line = LineString(coords)
-            self.layers[layer].append(line) 
-        return self.layers
+            layers[layer].append(line) 
+        return layers
