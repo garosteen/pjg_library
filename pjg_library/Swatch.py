@@ -49,6 +49,8 @@ class Swatch:
         self.layers = [[] for color in range(numColors)]
         self.fill = Fill.Fill()
         self.geometryCollection = GeometryCollection()
+        # TODO: REALLY need to stop relying on this radiant thing. Swatch line needs to be more generic!
+        self.radiant_offset = 1.5
 
     def set_grid_size(self, rows, cols):
         self.col_width = self.width / cols
@@ -101,16 +103,21 @@ class Swatch:
             swatches.append(f)
         return swatches
 
-    def vertical_swatch(self):
-        g = self.gridSize
+    def vertical_swatch(self, x, y, w, h):
         max_density = 1.5
         min_density = 0.3
         density_steps = 3
+        layers = [[] for c in range(self.numColors)]
         for i in range(self.numColors):
-            self.swatch_line(i, i, 0, 0.5, 1, 4, 1.5, 0.3)
-            self.swatch_line((i+1)%self.numColors, i+1, 4, -0.5, -1, 4, 1.5, 0.3)
+            layer = i
+            line = self.swatch_line(x, y, w, h, layer, i, 0, 0.5, 1, 4, 1.5, 0.3)
+            layers[layer].append(line)
 
-        return self.layers
+            layer = (i+1)%self.numColors
+            line = self.swatch_line(x, y, w, h, layer, i+1, 4, -0.5, -1, 4, 1.5, 0.3)
+            layers[layer].append(line)
+
+        return layers
         
     def triangle_blend(self, x, y, w, h):
         density = 0.6 # 0.7 is too much for the fountain pens, not enough showing through.
