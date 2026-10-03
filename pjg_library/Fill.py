@@ -1,4 +1,5 @@
 from shapely.geometry import LinearRing,LineString, Point,Polygon, GeometryCollection, MultiLineString
+from shapely import affinity
 import math
 import numpy as np
 from pjg_library import utilityfunctions as uf
@@ -123,6 +124,43 @@ class Fill:
 
 # Touches all grid cells, with backtracking, minimizing number of paths
 # 
+
+    def line_fill(self, poly: Polygon, density, angle) -> GeometryCollection:
+        lines = []
+        # Fill the shape with lines at the specified angle,
+        # Connected into a single stroke as possible
+        
+        # Get bounding box
+        minx, miny, maxx, maxy = poly.bounds
+        diagonal = LineString([(minx, miny), (maxx, maxy)])
+        center = diagonal.centroid
+        length = diagonal.length
+
+        print(diagonal)
+        # Get center of bounding box
+        print(center)
+        print(length)
+        # Create horizontal line of same length, through center
+        half = length/2.0
+        line = LineString([(center.x - half, center.y),
+                                 (center.x + half, center.y)])
+        line = affinity.rotate(line, angle, origin=center)
+        print(line)
+
+        perpendicular = affinity.rotate(line, 90, origin=center)
+
+        distance = 0
+        while(distance <= length):
+            distance += self.stroke_width
+            target_point = perpendicular.interpolate(distance)
+            xoff = target_point.x - center.x
+            yoff = target_point.y - center.y
+            shifted = affinity.translate(line, xoff=xoff, yoff=yoff)
+            lines.append(shifted)
+        gc = GeometryCollection(lines).intersection(poly)
+        return GeometryCollection(gc)
+
+
 def explore_grid_from_cell(grid, row=0, col=0):
     """
     Takes a boolean array and a starting row and column

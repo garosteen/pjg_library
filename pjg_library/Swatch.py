@@ -73,8 +73,14 @@ class Swatch:
 
     Could I generalize this like crazy? Give it a function for what to draw at each square?
     Then I could use this for LOTS of things. Nested circles, for instance.
+
+    The action function for swatch_line should take:
+        - location: x,y
+        - dimension/scale; w, h
+        - density
+
     """
-    def swatch_line(self, x, y, w, h, layer, row, col, rowstep, colstep, steps, start_density, end_density):
+    def swatch_line(self, x, y, w, h, layer, row, col, rowstep, colstep, steps, start_density, end_density, fill_function):
         # TODO: name this more accurately? It's a single layer sequence of swatches
         # TODO: pass it the function to draw to each thing?
         swatches = []
@@ -91,17 +97,45 @@ class Swatch:
             cur_col = col + step*colstep
             cur_x = x + (cur_col * (col_w))
             cur_y = y + (cur_row * (row_h))
-            box = [[cur_x, cur_y],
-                   [cur_x+col_w,cur_y],
-                   [cur_x+col_w,cur_y+row_h],
-                   [cur_x,cur_y+row_h]]
-            poly = Polygon(box)
+            #box = [[cur_x, cur_y],
+            #       [cur_x+col_w,cur_y],
+            #       [cur_x+col_w,cur_y+row_h],
+            #       [cur_x,cur_y+row_h]]
+            #poly = Polygon(box)
             # TODO: this fill should be adjustable to different fill methods
-            radiant = Point(cur_x + (col_w/2.0) + self.radiant_offset, 
-                            cur_y + (row_h/2.0) + self.radiant_offset) 
-            f = self.fill.radial_fill(poly, radiant=radiant, density=density)
+            #radiant = Point(cur_x + (col_w/2.0) + self.radiant_offset, 
+            #                cur_y + (row_h/2.0) + self.radiant_offset) 
+            #f = self.fill.radial_fill(poly, radiant=radiant, density=density)
+            f = fill_function(cur_x, cur_y, col_w, row_h, density)
             swatches.append(f)
         return swatches
+
+    def get_radiant_fill_function(self, radiant_offset):
+        def radiant_fill(x, y, w, h, density):
+            box = [[x, y],
+                   [x+w, y],
+                   [x+w, y+h],
+                   [x, y+h]]
+            poly = Polygon(box)
+            radiant = Point(x + w/2.0 + radiant_offset,
+                            y + h/2.0 + radiant_offset)
+            f = self.fill.radial_fill(poly, radiant=radiant, density=density)
+            return f
+        return radiant_fill
+
+    def get_line_fill_function(self, angle):
+        def line_fill(x, y, w, h, density):
+            # TODO: should I have functions that generalize this behavior?
+            # Like, a shapes class that I can give the x,y,w,h, and get my polygon back? 
+            # Probably this kind of shit already exists. Should I do more looking?
+            box = [[x, y],
+                   [x+w, y],
+                   [x+w, y+h],
+                   [x, y+h]]
+            poly = Polygon(box)
+            f = self.fill.line_fill(poly, density, angle=angle)
+            return f
+        return line_fill
 
     def vertical_swatch(self, x, y, w, h):
         max_density = 1.5
@@ -124,11 +158,14 @@ class Swatch:
         layers = [[] for c in range(self.numColors)]
         for c in range(self.numColors):
             print(c)
-            self.radiant_offset = (w / self.numColors) * 1.25
-            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, -0, 1, self.numColors-c, density, density)
+            radiant_offset = (w / self.numColors) * 1.25
+            fill_function = self.get_radiant_fill_function(radiant_offset)
+            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, -0, 1, self.numColors-c, density, density, fill_function)
             layers[c].append(swatches)
-            self.radiant_offset = self.radiant_offset*-1
-            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, 1, 1, c+1, density, density)
+
+            radiant_offset = radiant_offset*-1
+            fill_function = self.get_radiant_fill_function(radiant_offset)
+            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, 1, 1, c+1, density, density, fill_function)
             layers[c].append(swatches)
         print(len(layers))
         return layers
@@ -155,4 +192,25 @@ class Swatch:
                 current_line += 1
             line = LineString(coords)
             layers[layer].append(line) 
+        return layers
+
+    def crosshatch(self, x, y, w, h, steps):
+        layers = [[] for c in range(self.numColors)]
+        d_theta = 180/steps
+        angle = 0
+        for step in range(steps):
+            angle = step*d_theta
+            fill_function = self.get_line_fill_function(angle=angle)
+            swatch = self.swatch_line(x,y,w,h,
+                             layer=1,
+                             row=0,
+                             col=step,
+                             rowstep=0,
+                             colstep=1,
+                             steps=steps-step,
+                             start_density=1.0,
+                             end_density=1.0,
+                             fill_function = fill_function)
+            layers[0].append(swatch)
+
         return layers
