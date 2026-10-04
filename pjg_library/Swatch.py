@@ -80,12 +80,12 @@ class Swatch:
         - density
 
     """
-    def swatch_line(self, x, y, w, h, layer, row, col, rowstep, colstep, steps, start_density, end_density, fill_function):
+    def swatch_line(self, x, y, w, h, layer, rows, cols, row, col, rowstep, colstep, steps, start_density, end_density, fill_function):
         # TODO: name this more accurately? It's a single layer sequence of swatches
         # TODO: pass it the function to draw to each thing?
         swatches = []
-        col_w = w / self.numColors
-        row_h = h / self.numColors
+        col_w = w / cols
+        row_h = h / rows
         # TODO: gap? Or would this be handled by the drawing function?
         for step in range(steps):
             # TODO: do I really need a conditional here? That seems crazy, surely I can calculate density in one go
@@ -132,7 +132,7 @@ class Swatch:
                    [x+w, y],
                    [x+w, y+h],
                    [x, y+h]]
-            poly = Polygon(box)
+            poly = Polygon(box).buffer(-0.05)
             f = self.fill.line_fill(poly, density, angle=angle)
             return f
         return line_fill
@@ -144,11 +144,29 @@ class Swatch:
         layers = [[] for c in range(self.numColors)]
         for i in range(self.numColors):
             layer = i
-            line = self.swatch_line(x, y, w, h, layer, i, 0, 0.5, 1, 4, 1.5, 0.3)
+            line = self.swatch_line(x, y, w, h, layer, 
+                                    rows=self.numColors, 
+                                    cols=self.numColors, 
+                                    row=i, 
+                                    col=0, 
+                                    rowstep=0.5, 
+                                    colstep=1, 
+                                    steps=4, 
+                                    start_density=1.5, 
+                                    end_density=0.3)
             layers[layer].append(line)
 
             layer = (i+1)%self.numColors
-            line = self.swatch_line(x, y, w, h, layer, i+1, 4, -0.5, -1, 4, 1.5, 0.3)
+            line = self.swatch_line(x, y, w, h, layer, 
+                                    rows=self.numColors, 
+                                    cols=self.numColors, 
+                                    row=i+1, 
+                                    col=4, 
+                                    rowstep=-0.5, 
+                                    colstep=-1, 
+                                    steps=4, 
+                                    start_density=1.5, 
+                                    end_density=0.3)
             layers[layer].append(line)
 
         return layers
@@ -160,12 +178,23 @@ class Swatch:
             print(c)
             radiant_offset = (w / self.numColors) * 1.25
             fill_function = self.get_radiant_fill_function(radiant_offset)
-            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, -0, 1, self.numColors-c, density, density, fill_function)
+            swatches = self.swatch_line(x, y, w, h, c, self.numColors, self.numColors,
+                                        self.numColors-c-1, 0, -0, 1, self.numColors-c, density, density, fill_function)
             layers[c].append(swatches)
 
             radiant_offset = radiant_offset*-1
             fill_function = self.get_radiant_fill_function(radiant_offset)
-            swatches = self.swatch_line(x, y, w, h, c, self.numColors-c-1, 0, 1, 1, c+1, density, density, fill_function)
+            swatches = self.swatch_line(x, y, w, h, c, 
+                                        rows=self.numColors, 
+                                        cols=self.numColors,
+                                        row=self.numColors-c-1, 
+                                        col=0, 
+                                        rowstep=1, 
+                                        colstep=1, 
+                                        steps=c+1, 
+                                        start_density=density, 
+                                        end_density=density, 
+                                        fill_function=fill_function)
             layers[c].append(swatches)
         print(len(layers))
         return layers
@@ -198,19 +227,22 @@ class Swatch:
         layers = [[] for c in range(self.numColors)]
         d_theta = 180/steps
         angle = 0
-        for step in range(steps):
-            angle = step*d_theta
-            fill_function = self.get_line_fill_function(angle=angle)
-            swatch = self.swatch_line(x,y,w,h,
-                             layer=1,
-                             row=0,
-                             col=step,
-                             rowstep=0,
-                             colstep=1,
-                             steps=steps-step,
-                             start_density=1.0,
-                             end_density=1.0,
-                             fill_function = fill_function)
-            layers[0].append(swatch)
+        for layer in range(self.numColors):
+            for step in range(steps):
+                angle = step*d_theta
+                fill_function = self.get_line_fill_function(angle=angle)
+                swatch = self.swatch_line(x,y,w,h,
+                                 layer=1,
+                                          rows=self.numColors,
+                                          cols=steps,
+                                 row=layer,
+                                 col=step,
+                                 rowstep=0,
+                                 colstep=1,
+                                 steps=steps-step,
+                                 start_density=1.0,
+                                 end_density=1.0,
+                                 fill_function = fill_function)
+                layers[layer].append(swatch)
 
         return layers

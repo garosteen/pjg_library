@@ -130,7 +130,6 @@ class Fill:
         # Fill the shape with lines at the specified angle,
         # Connected into a single stroke as possible
         
-        # Get bounding box
         minx, miny, maxx, maxy = poly.bounds
         diagonal = LineString([(minx, miny), (maxx, maxy)])
         center = diagonal.centroid
@@ -151,13 +150,28 @@ class Fill:
 
         distance = 0
         while(distance <= length):
+            # TODO: Actually account for density
             distance += self.stroke_width
             target_point = perpendicular.interpolate(distance)
             xoff = target_point.x - center.x
             yoff = target_point.y - center.y
             shifted = affinity.translate(line, xoff=xoff, yoff=yoff)
-            lines.append(shifted)
-        gc = GeometryCollection(lines).intersection(poly)
+            lines.append(shifted.intersection(poly))
+        # How do I connect them?
+        connected = []
+        index = 0
+        # TODO: allow for disjoint and complex geometries by checking if the connected points are within tolerance, otherwise start a new line.
+        for line in lines:
+            if (len(line.coords) > 1):
+                connected.append(line.coords[index])
+                index = index-1
+                if index < -1:
+                    index = 0
+                connected.append(line.coords[index])
+        connected_ls = LineString(connected)
+
+        gc = GeometryCollection(lines)
+        gc = GeometryCollection(connected_ls)
         return GeometryCollection(gc)
 
 
